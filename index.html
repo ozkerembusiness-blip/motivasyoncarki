@@ -143,9 +143,10 @@
 
   .seg-text{
     fill: var(--gold-light);
-    font-family: 'Manrope', sans-serif;
-    font-weight: 700;
-    font-size: 11.5px;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 15px;
+    opacity: 0.9;
   }
 
   #hub{
@@ -363,27 +364,25 @@
     "Hedefini sadece görmek yetmez; bugün ona doğru bir adım at.",
     "Birlikte daha güçlüyüz, birlikte daha yükseğe!",
     "Bugün dünden daha iyi ol. Gerisini istikrar halleder.",
-    "Bölge 1 Premium’da sıradan bir gün yok. Bugün farkını ortaya koy!"
-    "İçindeki güce inan, bugün kendi sınırlarını aş."
-    "Düşlediğin hayat, cesaret ettiğin an başlar."
-    "Her sabah yeni bir şans, her adım yeni bir başlangıçtır."
-    "Başarı, pes etmeyi reddedenlerin yazdığı bir hikayedir."
-    "Zorluklar seni durdurmak için değil, ne kadar istediğini görmek için var."
-    "En karanlık gece bile güneşe boyun eğer; sadece ilerlemeye devam et."
-    "Büyük sıçramalar, küçücük ama kararlı adımlarla gerçekleşir."
-    "Dünün keşkelerini bırak, bugünün iyikilerini inşa et."
-    "Kendi potansiyelinin farkına var ve bugün parlamaya başla."
-    "Mazeretler sadece zaman çalar; harekete geç ve geleceğini şekillendir."
-    "Kendini hazırla bugün maximumdan giriş geliyor"
+    "Bölge 1 Premium’da sıradan bir gün yok. Bugün farkını ortaya koy!",
+    "İçindeki güce inan, bugün kendi sınırlarını aş.",
+    "Düşlediğin hayat, cesaret ettiğin an başlar.",
+    "Her sabah yeni bir şans, her adım yeni bir başlangıçtır.",
+    "Başarı, pes etmeyi reddedenlerin yazdığı bir hikayedir.",
+    "Zorluklar seni durdurmak için değil, ne kadar istediğini görmek için var.",
+    "En karanlık gece bile güneşe boyun eğer; sadece ilerlemeye devam et.",
+    "Büyük sıçramalar, küçücük ama kararlı adımlarla gerçekleşir.",
+    "Dünün keşkelerini bırak, bugünün iyikilerini inşa et.",
+    "Kendi potansiyelinin farkına var ve bugün parlamaya başla.",
+    "Mazeretler sadece zaman çalar; harekete geç ve geleceğini şekillendir.",
+    "Kendini hazırla, bugün maximumdan giriş geliyor."
   ];
 
   const N = quotes.length;
   const SLICE = 360 / N;
-  const cx = 200, cy = 200, R = 196, textR = 128;
+  const cx = 200, cy = 200, R = 196, labelR = 150;
   const svgNS = "http://www.w3.org/2000/svg";
   const wheel = document.getElementById('wheel');
-  const defs = document.createElementNS(svgNS, 'defs');
-  wheel.appendChild(defs);
 
   function polar(angleDeg, r){
     const rad = (angleDeg - 90) * Math.PI / 180;
@@ -394,47 +393,36 @@
     return i % 2 === 0 ? '#122238' : '#17304A';
   }
 
+  // 30'dan fazla dilimde tam cümleler dilime sığmayacağı için her dilimde
+  // sıra numarası gösteriliyor; tam cümle çevirme sonrasında sonuç kartında çıkıyor.
   for (let i = 0; i < N; i++){
     const start = i * SLICE;
     const end = start + SLICE;
     const centerAngle = start + SLICE / 2;
     const p1 = polar(start, R);
     const p2 = polar(end, R);
+    const largeArc = SLICE > 180 ? 1 : 0;
 
     const path = document.createElementNS(svgNS, 'path');
-    const d = `M ${cx} ${cy} L ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${R} ${R} 0 0 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z`;
+    const d = `M ${cx} ${cy} L ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${R} ${R} 0 ${largeArc} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z`;
     path.setAttribute('d', d);
     path.setAttribute('fill', sliceColor(i));
-    path.setAttribute('stroke', 'rgba(198,161,91,0.35)');
+    path.setAttribute('stroke', 'rgba(198,161,91,0.3)');
     path.setAttribute('stroke-width', '1');
     wheel.appendChild(path);
 
-    // curved text arc — reverse direction on bottom half so text isn't upside down
     const bottomHalf = centerAngle > 90 && centerAngle < 270;
-    const t1 = polar(start + 2, textR);
-    const t2 = polar(end - 2, textR);
-    const arcId = 'arc' + i;
-    const arcPath = document.createElementNS(svgNS, 'path');
-    let arcD;
-    if (bottomHalf){
-      arcD = `M ${t2.x.toFixed(2)} ${t2.y.toFixed(2)} A ${textR} ${textR} 0 0 0 ${t1.x.toFixed(2)} ${t1.y.toFixed(2)}`;
-    } else {
-      arcD = `M ${t1.x.toFixed(2)} ${t1.y.toFixed(2)} A ${textR} ${textR} 0 0 1 ${t2.x.toFixed(2)} ${t2.y.toFixed(2)}`;
-    }
-    arcPath.setAttribute('d', arcD);
-    arcPath.setAttribute('id', arcId);
-    arcPath.setAttribute('fill', 'none');
-    defs.appendChild(arcPath);
+    const labelAngle = bottomHalf ? centerAngle + 180 : centerAngle;
+    const lp = polar(centerAngle, labelR);
 
     const text = document.createElementNS(svgNS, 'text');
     text.setAttribute('class', 'seg-text');
-    const textPath = document.createElementNS(svgNS, 'textPath');
-    textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + arcId);
-    textPath.setAttribute('href', '#' + arcId);
-    textPath.setAttribute('startOffset', '50%');
-    textPath.setAttribute('text-anchor', 'middle');
-    textPath.textContent = quotes[i];
-    text.appendChild(textPath);
+    text.setAttribute('x', lp.x.toFixed(2));
+    text.setAttribute('y', lp.y.toFixed(2));
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'middle');
+    text.setAttribute('transform', `rotate(${labelAngle.toFixed(2)} ${lp.x.toFixed(2)} ${lp.y.toFixed(2)})`);
+    text.textContent = String(i + 1).padStart(2, '0');
     wheel.appendChild(text);
   }
 
