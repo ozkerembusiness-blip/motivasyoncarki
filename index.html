@@ -207,6 +207,12 @@
     margin: 0 0 10px;
   }
 
+  .result-row{
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
   .result-quote{
     font-family: 'Fraunces', serif;
     font-style: italic;
@@ -215,6 +221,44 @@
     line-height: 1.42;
     color: var(--cream);
     margin: 0;
+    flex: 1;
+  }
+
+  .copy-btn{
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid rgba(198,161,91,0.45);
+    background: rgba(198,161,91,0.08);
+    color: var(--gold-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background .2s ease, transform .15s ease, border-color .2s ease;
+  }
+  .copy-btn:active{ transform: scale(0.92); }
+  .copy-btn svg{ width: 17px; height: 17px; display: block; }
+  .copy-btn.copied{
+    background: rgba(198,161,91,0.22);
+    border-color: var(--gold);
+  }
+
+  .copy-toast{
+    display: block;
+    margin-top: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold-light);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .copy-toast.show{
+    opacity: 1;
+    transform: translateY(0);
   }
 
   footer{
@@ -275,7 +319,19 @@
 
       <div class="result-card" id="resultCard">
         <p class="result-label">Bugünün motivasyonu</p>
-        <p class="result-quote" id="resultQuote">—</p>
+        <div class="result-row">
+          <p class="result-quote" id="resultQuote">—</p>
+          <button class="copy-btn" id="copyBtn" aria-label="Cümleyi kopyala" type="button">
+            <svg id="copyIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="12" height="12" rx="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <svg id="checkIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+        </div>
+        <span class="copy-toast" id="copyToast">Kopyalandı</span>
       </div>
     </main>
 
@@ -308,6 +364,17 @@
     "Birlikte daha güçlüyüz, birlikte daha yükseğe!",
     "Bugün dünden daha iyi ol. Gerisini istikrar halleder.",
     "Bölge 1 Premium’da sıradan bir gün yok. Bugün farkını ortaya koy!"
+    "İçindeki güce inan, bugün kendi sınırlarını aş."
+    "Düşlediğin hayat, cesaret ettiğin an başlar."
+    "Her sabah yeni bir şans, her adım yeni bir başlangıçtır."
+    "Başarı, pes etmeyi reddedenlerin yazdığı bir hikayedir."
+    "Zorluklar seni durdurmak için değil, ne kadar istediğini görmek için var."
+    "En karanlık gece bile güneşe boyun eğer; sadece ilerlemeye devam et."
+    "Büyük sıçramalar, küçücük ama kararlı adımlarla gerçekleşir."
+    "Dünün keşkelerini bırak, bugünün iyikilerini inşa et."
+    "Kendi potansiyelinin farkına var ve bugün parlamaya başla."
+    "Mazeretler sadece zaman çalar; harekete geç ve geleceğini şekillendir."
+    "Kendini hazırla bugün maximumdan giriş geliyor"
   ];
 
   const N = quotes.length;
@@ -375,9 +442,61 @@
   const hint = document.getElementById('hint');
   const resultCard = document.getElementById('resultCard');
   const resultQuote = document.getElementById('resultQuote');
+  const copyBtn = document.getElementById('copyBtn');
+  const copyIcon = document.getElementById('copyIcon');
+  const checkIcon = document.getElementById('checkIcon');
+  const copyToast = document.getElementById('copyToast');
 
   let totalRotation = 0;
   let spinning = false;
+  let copyTimer = null;
+
+  function copyText(text){
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function(resolve, reject){
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try{
+        document.execCommand('copy');
+        resolve();
+      } catch(err){
+        reject(err);
+      }
+      document.body.removeChild(ta);
+    });
+  }
+
+  copyBtn.addEventListener('click', function(){
+    const text = resultQuote.textContent;
+    copyText(text).then(function(){
+      copyBtn.classList.add('copied');
+      copyIcon.style.display = 'none';
+      checkIcon.style.display = 'block';
+      copyToast.classList.add('show');
+      if (copyTimer) clearTimeout(copyTimer);
+      copyTimer = setTimeout(function(){
+        copyBtn.classList.remove('copied');
+        copyIcon.style.display = 'block';
+        checkIcon.style.display = 'none';
+        copyToast.classList.remove('show');
+      }, 1800);
+    }).catch(function(){
+      copyToast.textContent = 'Kopyalanamadı';
+      copyToast.classList.add('show');
+      if (copyTimer) clearTimeout(copyTimer);
+      copyTimer = setTimeout(function(){
+        copyToast.classList.remove('show');
+        copyToast.textContent = 'Kopyalandı';
+      }, 1800);
+    });
+  });
 
   function segmentCenterAngle(i){
     return i * SLICE + SLICE / 2;
